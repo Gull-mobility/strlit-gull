@@ -69,9 +69,10 @@ SELECT
 @st.experimental_memo(ttl=12 * 60 * 60)
 def get_model():
     #OLD Load from bucket
-    #fname = 'model.pkl'
-    #model = joblib.load(open(fname, 'rb'))
+    fname = 'model.pkl'
+    model = joblib.load(open(fname, 'rb'))
 
+    """
     #Read model
     storage_client = storage.Client()
     bucket_name='cs_model'
@@ -86,6 +87,7 @@ def get_model():
         temp_file.seek(0)
         #load into joblib
         model=joblib.load(temp_file)
+    """
 
     return model
 
