@@ -1,3 +1,11 @@
-pandas
-streamlit
-plotly
+streamlit==1.11.1
+google-cloud-bigquery==3.3.2
+plotly==5.10.0
+geopandas
+rtree==1.0.0
+joblib
+db-dtypes
+sklearn
+pydeck
+matplotlib
+google-cloud-storage

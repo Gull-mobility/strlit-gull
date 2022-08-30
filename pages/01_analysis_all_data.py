@@ -13,9 +13,6 @@ import geopandas as gpd
 import fiona
 #Impor models
 import joblib
-#Cloud storage to get model
-from google.cloud import storage
-from tempfile import TemporaryFile
 
 #Inialize BigQuery client
 client = bigquery.Client()
@@ -35,15 +32,12 @@ def run_query_data1():
 
     #Dont get geometry becouse is to big to recieve -       geoDistrict.geometry,
     
-    #THis query is to use geolocations but now is not been used.
     query = """
 WITH geoDistrict AS( SELECT
     name,
     idDistrito,
     geometry,
-    ST_CENTROID(geometry) AS center,
-    ST_X( ST_CENTROID(geometry) ) as lon,
-    ST_Y( ST_CENTROID(geometry) ) as lat 
+    ST_CENTROID(geometry) AS center
   FROM `vacio-276411.mainDataset.districts`
 )
 
@@ -52,13 +46,12 @@ SELECT
       alldata.dateandtime AS date_time,
       alldata.trips,
       geoDistrict.center,
-      geoDistrict.lon,
-      geoDistrict.lat,
-  FROM `vacio-276411.mainDataset.V1E_trips_grouped_all_hours_onlythree` AS alldata
+      ST_X(geoDistrict.center) as lon,
+      ST_Y(geoDistrict.center) as lat 
+  FROM `vacio-276411.mainDataset.V1_trips_grouped_all_hours` AS alldata
   LEFT JOIN geoDistrict
   ON alldata.district = geoDistrict.idDistrito
             """
-    
 
     df_data = client.query(query).to_dataframe()
     df_data['lat'] = df_data['lat'].astype(str).astype(float)
@@ -68,25 +61,9 @@ SELECT
 
 def make_estimation(df_data):
 
-    #OLD Load from bucket
-    #fname = 'model.pkl'
-    #model = joblib.load(open(fname, 'rb'))
-
     #Read model
-    storage_client = storage.Client()
-    bucket_name='cs_model'
-    model_bucket='model_strlit-gull/model.pkl'
-
-    bucket = storage_client.get_bucket(bucket_name)
-    #select bucket file
-    blob = bucket.blob(model_bucket)
-    with TemporaryFile() as temp_file:
-        #download blob into temp file
-        blob.download_to_file(temp_file)
-        temp_file.seek(0)
-        #load into joblib
-        model=joblib.load(temp_file)
-
+    fname = 'model.pkl'
+    model = joblib.load(open(fname, 'rb'))
 
     ##PREPARE  ESTIMATIONS
     #Shift method to create the lag variables
