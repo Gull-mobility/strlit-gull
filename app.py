@@ -66,8 +66,8 @@ SELECT
     df_data['elevation'] = df_data['trips']*100
     return df_data
 
-def make_estimation(df_data):
-
+@st.experimental_memo(ttl=12 * 60 * 60)
+def get_model():
     #OLD Load from bucket
     #fname = 'model.pkl'
     #model = joblib.load(open(fname, 'rb'))
@@ -86,6 +86,12 @@ def make_estimation(df_data):
         temp_file.seek(0)
         #load into joblib
         model=joblib.load(temp_file)
+
+    return model
+
+def make_estimation(df_data):
+
+    model = get_model()
 
 
     ##PREPARE  ESTIMATIONS
