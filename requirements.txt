@@ -1,11 +1,10 @@
-streamlit==1.11.1
-google-cloud-bigquery==3.3.2
+streamlit==1.11.0
+google-cloud-bigquery==3.3.0
 plotly==5.10.0
 geopandas
 rtree==1.0.0
-joblib
+joblib==1.1.0
 db-dtypes
 sklearn
-pydeck
+pydeck==0.7.1
 matplotlib
-google-cloud-storage

@@ -13,9 +13,6 @@ import geopandas as gpd
 import fiona
 #Impor models
 import joblib
-#Cloud storage to get model
-from google.cloud import storage
-from tempfile import TemporaryFile
 
 #Inialize BigQuery client
 client = bigquery.Client()
@@ -66,34 +63,33 @@ SELECT
     df_data['elevation'] = df_data['trips']*100
     return df_data
 
-@st.experimental_memo(ttl=12 * 60 * 60)
-def get_model():
-    #OLD Load from bucket
-    fname = 'model.pkl'
-    model = joblib.load(open(fname, 'rb'))
 
-    """
-    #Read model
-    storage_client = storage.Client()
-    bucket_name='cs_model'
-    model_bucket='model_strlit-gull/model.pkl'
 
-    bucket = storage_client.get_bucket(bucket_name)
-    #select bucket file
-    blob = bucket.blob(model_bucket)
-    with TemporaryFile() as temp_file:
-        #download blob into temp file
-        blob.download_to_file(temp_file)
-        temp_file.seek(0)
-        #load into joblib
-        model=joblib.load(temp_file)
-    """
 
-    return model
+
+""" MODEL FROM CLOUD STORAGE
+#Read model
+storage_client = storage.Client()
+bucket_name='cs_model'
+model_bucket='model_strlit-gull/model.pkl'
+
+bucket = storage_client.get_bucket(bucket_name)
+#select bucket file
+blob = bucket.blob(model_bucket)
+with TemporaryFile() as temp_file:
+    #download blob into temp file
+    blob.download_to_file(temp_file)
+    temp_file.seek(0)
+    #load into joblib
+    model=joblib.load(temp_file)
+"""
+
+
 
 def make_estimation(df_data):
 
-    model = get_model()
+    fname = 'model.pkl'
+    model = joblib.load(open(fname, 'rb'))
 
 
     ##PREPARE  ESTIMATIONS
@@ -128,7 +124,7 @@ def make_estimation(df_data):
 
 # FUNCTION FOR AIRPORT MAPS
 def map(data, lat, lon, zoom, elevationColumn, dataColumn):
-    st.write(
+    st.pydeck_chart(
         pdk.Deck(
             map_style="mapbox://styles/mapbox/light-v9",
             initial_view_state={
