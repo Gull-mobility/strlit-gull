@@ -45,6 +45,7 @@ WITH geoDistrict AS( SELECT
 )
 
 SELECT
+      geoDistrict.name,
       alldata.district,
       alldata.dateandtime AS date_time,
       alldata.trips,
@@ -61,30 +62,11 @@ SELECT
     df_data['lat'] = df_data['lat'].astype(str).astype(float)
     df_data['lon'] = df_data['lon'].astype(str).astype(float)
     df_data['elevation'] = df_data['trips']*100
+
+    #Change name of long districts
+    df_data["name"].replace({"Fuencarral - El Pardo": "Fuencarral", "Moncloa - Aravaca": "Moncloa"}, inplace=True)
+
     return df_data
-
-
-
-
-
-""" MODEL FROM CLOUD STORAGE
-#Read model
-storage_client = storage.Client()
-bucket_name='cs_model'
-model_bucket='model_strlit-gull/model.pkl'
-
-bucket = storage_client.get_bucket(bucket_name)
-#select bucket file
-blob = bucket.blob(model_bucket)
-with TemporaryFile() as temp_file:
-    #download blob into temp file
-    blob.download_to_file(temp_file)
-    temp_file.seek(0)
-    #load into joblib
-    model=joblib.load(temp_file)
-"""
-
-
 
 def make_estimation(df_data):
 
@@ -117,8 +99,6 @@ def make_estimation(df_data):
 
     #Add a colum to show in map
     df_data['pred_elevation'] = df_data['prediction']*100
-
-
 
     return df_data
 
@@ -158,6 +138,12 @@ def map(data, lat, lon, zoom, elevationColumn, dataColumn):
 @st.experimental_memo
 def filterdata(df, hour_selected,date_selected):
     return df[ (df["date_time"].dt.hour == hour_selected + adjust_hour) & (df['date_time'].dt.date == date_selected) ]
+
+def roundnumbers(df):
+    df['prediction'] = df['prediction'].map(lambda x: "{:,.1f}".format(x))
+    df['error'] = df['error'].map(lambda x: "{:,.1f}".format(x))
+    df['desviacionpercentage'] = df['desviacionpercentage'].map(lambda x: "{:,.2f}".format(x))
+    return df
 
 
 # STREAMLIT APP LAYOUT
@@ -228,8 +214,11 @@ with row1_2:
     st.write(
         """
     ##
-    Examining how Uber predicts vary over time in New York City's and at its major regional airports.
-    By sliding the slider on the left you can view different slices of time and explore different transportation trends.
+    Here you can select a specific an hour and we will show the trips done and the trips that we had estimated. Also you can see the prediction por the next hour and check how we did it later.
+    
+    To make this prediction we use the services providers: car2go, emov, wible.
+
+    Please select hours only between 4 and 23
     """
     )
 
@@ -262,7 +251,7 @@ with row2_3:
 
 
 # LAYING OUT THE MIDDLE SECTION OF THE APP WITH THE MAPS
-row3_1, row3_2, row3_3, row3_4 = st.columns((2, 2, 2, 1))
+row3_1, row3_2, row3_3 = st.columns((2, 2, 2))
 
 # SETTING THE ZOOM LOCATIONS FOR THE AIRPORTS
 la_guardia = [40.4167, -3.7049] 
@@ -273,20 +262,20 @@ zoom_level = 12
 midpoint = la_guardia
 
 with row3_1:
-    st.write(
-        f"""**All New York City from {hour_selected}:00 and {(hour_selected + 1) % 24}:00**"""
-    )
+    st.write(f"""Trips **done** from {hour_selected}:00 and {(hour_selected + 1) % 24}:00""")
     map(filterdata(data, hour_selected, date_selected), midpoint[0], midpoint[1], 12, ["elevation"], ["trips"])
 
 with row3_2:
-    st.write("**La Guardia Airport**")
+    st.write(f"""Trips **estimated** from {hour_selected}:00 and {(hour_selected + 1) % 24}:00""")
     map(filterdata(data, hour_selected, date_selected), la_guardia[0], la_guardia[1], zoom_level,["pred_elevation"], ["prediction"])
 
 with row3_3:
-    st.write("**JFK Airport**")
+    st.write("**Real VS Prediction**")
     #Not sow datetime becouse is the same
-    st.dataframe((filterdata(data, hour_selected, date_selected))[['district','trips','prediction','error','desviacionpercentage','aceptable']])
+    st.dataframe((roundnumbers (filterdata(data, hour_selected, date_selected)) )[['name','trips','prediction','error','desviacionpercentage','aceptable']])
     #['district','trips','prediction']
+    st.write("Here you can see: name of district, trips, trips estimated, absolut error and pertentage of error, if it's acceptable or not")
+    st.write("A value is aceptable if error is less than 2 units or a 20%")
 
-
-#st.dataframe(data)
+st.sidebar.markdown("[More visualization in Datastudio](https://datastudio.google.com/reporting/4627480c-1c6d-47d3-a55c-b2ab56812a8d)")
+st.sidebar.markdown("[Code on github](https://github.com/Gull-mobility)")

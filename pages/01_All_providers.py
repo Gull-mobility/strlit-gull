@@ -42,6 +42,7 @@ WITH geoDistrict AS( SELECT
 )
 
 SELECT
+      geoDistrict.name,
       alldata.district,
       alldata.dateandtime AS date_time,
       alldata.trips,
@@ -57,6 +58,10 @@ SELECT
     df_data['lat'] = df_data['lat'].astype(str).astype(float)
     df_data['lon'] = df_data['lon'].astype(str).astype(float)
     df_data['elevation'] = df_data['trips']*100
+
+    #Change name of long districts
+    df_data["name"].replace({"Fuencarral - El Pardo": "Fuencarral", "Moncloa - Aravaca": "Moncloa"}, inplace=True)
+
     return df_data
 
 def make_estimation(df_data):
@@ -201,8 +206,12 @@ with row1_2:
     st.write(
         """
     ##
-    Examining how Uber predicts vary over time in New York City's and at its major regional airports.
-    By sliding the slider on the left you can view different slices of time and explore different transportation trends.
+    Here you can select a specific an hour and we will show the trips done and the trips that we had estimated. 
+    You only can choose prediction this year until the end of Jun.
+    
+    To make this prediction we use the services providers (moto,car and scooter): goto, movo, wible, car2go, emov, ecooltra and acciona
+    
+    Please select hours only between 4 and 23
     """
     )
 
@@ -210,18 +219,15 @@ with row1_2:
 # LAYING OUT THE SECTION 2
 row2_1, row2_2, row2_3 = st.columns(3)
 
-with row2_1:
-    result =  st.button("Next hour", on_click=set_next_hour)
-    result2 = st.button("Last hour", on_click=set_last_hour)
 
 with row2_2:
 
     date_selected = st.date_input(
         "Select date",
-        datetime.date.today(),
+        datetime.date(2022, 7, 5),
         key="predict_date",
-        min_value= datetime.date(2022, 1, 20),
-        max_value= datetime.date(2022, 9, 30),
+        min_value= datetime.date(2022, 1, 1),
+        max_value= datetime.date(2022, 7, 31),
         on_change=update_query_params
     )
     #st.write('Your birthday is:', d)
@@ -235,7 +241,7 @@ with row2_3:
 
 
 # LAYING OUT THE MIDDLE SECTION OF THE APP WITH THE MAPS
-row3_1, row3_2, row3_3, row3_4 = st.columns((2, 2, 2, 1))
+row3_1, row3_2, row3_3 = st.columns((2, 2, 2))
 
 # SETTING THE ZOOM LOCATIONS FOR THE AIRPORTS
 la_guardia = [40.4167, -3.7049] 
@@ -246,20 +252,19 @@ zoom_level = 12
 midpoint = la_guardia
 
 with row3_1:
-    st.write(
-        f"""**All New York City from {hour_selected}:00 and {(hour_selected + 1) % 24}:00**"""
-    )
+    st.write(f"""Trips **done** from {hour_selected}:00 and {(hour_selected + 1) % 24}:00""")
     map(filterdata(data, hour_selected, date_selected), midpoint[0], midpoint[1], 12, ["elevation"], ["trips"])
 
 with row3_2:
-    st.write("**La Guardia Airport**")
+    st.write(f"""Trips **estimated** from {hour_selected}:00 and {(hour_selected + 1) % 24}:00""")
     map(filterdata(data, hour_selected, date_selected), la_guardia[0], la_guardia[1], zoom_level,["pred_elevation"], ["prediction"])
 
 with row3_3:
-    st.write("**JFK Airport**")
+    st.write("**Real VS Prediction**")
     #Not sow datetime becouse is the same
-    st.dataframe((filterdata(data, hour_selected, date_selected))[['district','trips','prediction','error','desviacionpercentage','aceptable']])
+    st.dataframe((filterdata(data, hour_selected, date_selected))[['name','trips','prediction','error','desviacionpercentage','aceptable']])
     #['district','trips','prediction']
 
 
-#st.dataframe(data)
+st.sidebar.markdown("[More visualization in Datastudio](https://datastudio.google.com/reporting/4627480c-1c6d-47d3-a55c-b2ab56812a8d)")
+st.sidebar.markdown("[Code on github](https://github.com/Gull-mobility)")

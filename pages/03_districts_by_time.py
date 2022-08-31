@@ -47,7 +47,7 @@ fig.add_heatmap(
     # colorscale="Viridis",
 )
 
-fig.update_layout(title_text="Monthly cohorts showing retention rates", title_x=0.5)
+#fig.update_layout(title_text="Monthly cohorts showing retention rates", title_x=0.5)
 fig.layout.xaxis.title = "hora"
 fig.layout.yaxis.title = "Distrito"
 fig["layout"]["title"]["font"] = dict(size=25)
@@ -58,3 +58,7 @@ fig.layout.height = 750
 #fig.layout.yaxis.tickvals = df.index
 fig.layout.margin.b = 100
 fig
+
+#Add sidebar
+st.sidebar.markdown("[More visualization in Datastudio](https://datastudio.google.com/reporting/4627480c-1c6d-47d3-a55c-b2ab56812a8d)")
+st.sidebar.markdown("[Code on github](https://github.com/Gull-mobility)")

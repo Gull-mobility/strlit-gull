@@ -1,19 +1,3 @@
-# Copyright 2018-2022 Streamlit Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-import inspect
-import textwrap
 from urllib.error import URLError
 
 import pandas as pd
@@ -38,55 +22,11 @@ def run_query_data1():
     df_data['lon_end'] = df_data['lon_end'].astype(str).astype(float)
     return df_data
 
-def show_code(demo):
-    """Show the code of the demo."""
-    show_code = st.sidebar.checkbox("Show code", True)
-    if show_code:
-        # Showing the code of the demo.
-        st.markdown("## Code")
-        sourcelines, _ = inspect.getsourcelines(demo)
-        st.code(textwrap.dedent("".join(sourcelines[1:])))
-
-
 
 def mapping_demo():
-    @st.cache
-    def from_data_file(filename):
-        url = (
-            "http://raw.githubusercontent.com/streamlit/"
-            "example-data/master/hello/v1/%s" % filename
-        )
-        return pd.read_json(url)
-
     try:
         ALL_LAYERS = {
-            "Bike Rentals": pdk.Layer(
-                "HexagonLayer",
-                data=from_data_file("bike_rental_stats.json"),
-                get_position=["lon", "lat"],
-                radius=200,
-                elevation_scale=4,
-                elevation_range=[0, 1000],
-                extruded=True,
-            ),
-            "Bart Stop Exits": pdk.Layer(
-                "ScatterplotLayer",
-                data=from_data_file("bart_stop_stats.json"),
-                get_position=["lon", "lat"],
-                get_color=[200, 30, 0, 160],
-                get_radius="[exits]",
-                radius_scale=0.05,
-            ),
-            "Bart Stop Names": pdk.Layer(
-                "TextLayer",
-                data=from_data_file("bart_stop_stats.json"),
-                get_position=["lon", "lat"],
-                get_text="name",
-                get_color=[0, 0, 0, 200],
-                get_size=15,
-                get_alignment_baseline="'bottom'",
-            ),
-            "Outbound Flow": pdk.Layer(
+            "Show trips": pdk.Layer(
                 "ArcLayer",
                 #df_datadata=from_data_file("bart_path_stats.json"),
                 data=filterdata(data, hour_selected),
@@ -101,7 +41,6 @@ def mapping_demo():
                 width_max_pixels=30,
             ),
         }
-        st.sidebar.markdown("### Map Layers")
         selected_layers = [
             layer
             for layer_name, layer in ALL_LAYERS.items()
@@ -141,16 +80,7 @@ def update_query_params():
 def filterdata(df, hour_selected):
     return df[df["date_time"].dt.hour == hour_selected]
 
-# FILTER DATA BY HOUR
-@st.experimental_memo
-def histdata(df, hr):
-    filtered = data[
-        (df["date_time"].dt.hour >= hr) & (df["date_time"].dt.hour < (hr + 1))
-    ]
 
-    hist = np.histogram(filtered["date_time"].dt.minute, bins=60, range=(0, 60))[0]
-
-    return pd.DataFrame({"minute": range(60), "pickups": hist})
 
 # SEE IF THERE'S A QUERY PARAM IN THE URL (e.g. ?pickup_hour=2)
 # THIS ALLOWS YOU TO PASS A STATEFUL URL TO SOMEONE WITH A SPECIFIC HOUR SELECTED,
@@ -168,21 +98,19 @@ def update_query_params():
     hour_selected = st.session_state["pickup_hour"]
     st.experimental_set_query_params(pickup_hour=hour_selected)
 
-st.set_page_config(page_title="Mapping Demo", page_icon="🌍")
-st.markdown("# Mapping Demo")
-st.write(
-    """This demo shows how to use
-[`st.pydeck_chart`](https://docs.streamlit.io/library/api-reference/charts/st.pydeck_chart)
-to display geospatial data."""
-)
+st.set_page_config(page_title="Visualize Trips", page_icon="🌍")
+st.markdown("# Visualize trips")
+st.write("This visualization show you trips made the 2021-05-14")
+st.write("In red is the origin of the trip and in green the destiny.")
+st.write("With this visualization you can touch with your hands and notice the increase of trips during the day.")
 
 data = run_query_data1()
 
-st.title("NYC Uber Ridesharing Data")
 hour_selected = st.slider(
-    "Select hour of pickup", 0, 23, key="pickup_hour", on_change=update_query_params
+    "Selecciona the start hour of the trip", 0, 23, key="pickup_hour", on_change=update_query_params
 )
 
 mapping_demo()
 
-show_code(mapping_demo)
+st.sidebar.markdown("[More visualization in Datastudio](https://datastudio.google.com/reporting/4627480c-1c6d-47d3-a55c-b2ab56812a8d)")
+st.sidebar.markdown("[Code on github](https://github.com/Gull-mobility)")
