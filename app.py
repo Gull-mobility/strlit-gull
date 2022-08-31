@@ -119,7 +119,7 @@ def map(data, lat, lon, zoom, elevationColumn, dataColumn):
                     data=data,
                     get_position=["lon", "lat"],
                     radius=200,
-                    elevation_scale=4,
+                    elevation_scale=1,
                     elevation_range=[0, 1000],
                     pickable=True,
                     extruded=True,
